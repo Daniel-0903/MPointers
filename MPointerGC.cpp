@@ -1,6 +1,6 @@
 #include "MPointerGC.h"
 
-MPointerGC::MPointerGC() {
+//MPointerGC::MPointerGC() {
 	
-}
+
 

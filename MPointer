@@ -1,3 +1,4 @@
+// MPointer.h (modificado sin multithreading)
 #ifndef MPOINTER_H
 #define MPOINTER_H
 
@@ -8,7 +9,6 @@ template <typename T>
 class MPointer {
 private:
     T* ptr;  // Puntero que encapsularemos
-    int id;  // ID único
     static MPointerGC* gc;  // Instancia del recolector de basura
 
 public:
@@ -51,6 +51,11 @@ public:
     static MPointer<T> New() {
         return MPointer<T>();  // Llama al constructor por defecto
     }
+
+    // Método para ejecutar manualmente la recolección de basura
+    static void collectGarbage() {
+        gc->collect();
+    }
 };
 
 // Inicializa el singleton de GC
@@ -58,4 +63,3 @@ template <typename T>
 MPointerGC* MPointer<T>::gc = MPointerGC::getInstance();
 
 #endif
-
