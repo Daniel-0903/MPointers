@@ -1,17 +1,16 @@
-// MPointerGC.h (versión sin mutex)
 #ifndef MPOINTERGC_H
 #define MPOINTERGC_H
 
 #include <map>
+#include <iostream>
 
 template <typename T>
 class MPointer;  // Forward declaration
 
 class MPointerGC {
 private:
-    // Mapa que mantiene los punteros y su conteo de referencias
-    std::map<void*, int> pointerMap;
-    static MPointerGC* instance;  // Singleton
+    std::map<void*, int> pointerMap;  // Mapa de punteros a su conteo de referencias
+    static MPointerGC* instance;  // Instancia del singleton
 
     // Constructor privado para singleton
     MPointerGC() {}
@@ -33,7 +32,9 @@ public:
 
     // Método para incrementar el contador de referencias
     void addReference(void* ptr) {
-        pointerMap[ptr]++;
+        if (pointerMap.find(ptr) != pointerMap.end()) {
+            pointerMap[ptr]++;
+        }
     }
 
     // Método para decrementar el contador de referencias
@@ -41,8 +42,8 @@ public:
         if (pointerMap.find(ptr) != pointerMap.end()) {
             pointerMap[ptr]--;
             if (pointerMap[ptr] == 0) {
-                delete static_cast<int*>(ptr);  // Libera la memoria si ya no tiene referencias
-                pointerMap.erase(ptr);  // Elimina la entrada del mapa
+                delete static_cast<typename std::remove_pointer<decltype(ptr)>::type*>(ptr);  // Libera la memoria si ya no tiene referencias
+                pointerMap.erase(ptr);  // Elimina el puntero del mapa
             }
         }
     }
@@ -51,7 +52,7 @@ public:
     void collect() {
         for (auto it = pointerMap.begin(); it != pointerMap.end();) {
             if (it->second == 0) {  // Si el contador de referencias es 0
-                delete static_cast<int*>(it->first);  // Libera la memoria
+                delete static_cast<typename std::remove_pointer<decltype(it->first)>::type*>(it->first);  // Libera la memoria
                 it = pointerMap.erase(it);  // Elimina el puntero del mapa
             } else {
                 ++it;
@@ -64,4 +65,3 @@ public:
 MPointerGC* MPointerGC::instance = nullptr;
 
 #endif
-
