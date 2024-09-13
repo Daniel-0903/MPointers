@@ -1,6 +1,6 @@
 #include "Mpointer.h"
 
-Mpointer::Mpointer() {
+//Mpointer::Mpointer() {
 	
-}
+//}
 
