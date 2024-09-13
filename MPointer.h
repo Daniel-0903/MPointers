@@ -8,57 +8,80 @@ template <typename T>
 class MPointer {
 private:
 	T* ptr;  // Puntero que encapsularemos
-	static MPointerGC* gc;  // Instancia del recolector de basura
+	int id;  // ID único del MPointer
+	static MPointerGC* gc;  // Instancia del Garbage Collector
 	
 public:
-	// Constructor: Inicializa el puntero y lo registra en el GC
-	MPointer() {
-		ptr = new T();  // Reserva memoria para el tipo T
-		gc->registerPointer(this);  // Registra el puntero en el GC
-		std::cout << "MPointer creado y memoria reservada." << std::endl;
+	// Constructor por defecto
+	MPointer() : ptr(nullptr) {
+		id = -1;  // ID por defecto
 	}
 	
-	// Destructor: Libera la referencia en el GC
-	~MPointer() {
-		gc->removeReference(this);
+	// Sobrecarga del operador de asignación para nullptr
+	MPointer<T>& operator=(std::nullptr_t) {
+		gc->getInstance()->removeReference(ptr);
 		delete ptr;
-		std::cout << "MPointer destruido y memoria liberada." << std::endl;
+		ptr = nullptr;
+		return *this;
 	}
 	
-	// Sobrecarga del operador * (dereference) para obtener o asignar valor
+	// Destructor
+	~MPointer() {
+		gc->getInstance()->removeReference(ptr);
+		delete ptr;
+		std::cout << "MPointer destruido con ID " << id << std::endl;
+	}
+	
+	// Sobrecarga del operador *
 	T& operator*() {
-		return *ptr;  // Devuelve el valor apuntado
+		return *ptr;
 	}
 	
-	// Sobrecarga del operador & para obtener la dirección del puntero
+	// Sobrecarga del operador &
 	T* operator&() {
-		return ptr;  // Devuelve la dirección del puntero encapsulado
+		return ptr;
 	}
 	
 	// Sobrecarga del operador de asignación
 	MPointer<T>& operator=(const MPointer<T>& other) {
-		if (this != &other) {  // Evitar auto-asignación
-			gc->removeReference(this);
-			delete ptr;  // Libera la memoria actual
-			ptr = new T(*other.ptr);  // Asigna una nueva copia
-			gc->addReference(&other);  // Incrementa la referencia del puntero asignado
+		if (this != &other) {
+			if (ptr) {
+				gc->getInstance()->removeReference(ptr);
+				delete ptr;
+			}
+			ptr = new T(*other.ptr);
+			id = other.id;
+			gc->getInstance()->addReference(ptr);
 		}
 		return *this;
 	}
 	
 	// Método estático para crear un nuevo MPointer
 	static MPointer<T> New() {
-		return MPointer<T>();  // Llama al constructor por defecto
+		MPointer<T> p;
+		p.ptr = new T();
+		p.id = gc->getInstance()->registerPointer(p.ptr);  // Se registra el puntero crudo
+		return p;
 	}
 	
-	// Método para ejecutar manualmente la recolección de basura
-	static void collectGarbage() {
-		gc->collect();
+	// Verificación si el puntero es nulo
+	bool isNull() const {
+		return ptr == nullptr;
+	}
+	
+	// Sobrecarga del operador ==
+	bool operator==(const MPointer<T>& other) const {
+		return this->ptr == other.ptr;
+	}
+	
+	// Sobrecarga del operador !=
+	bool operator!=(const MPointer<T>& other) const {
+		return this->ptr != other.ptr;
 	}
 };
 
-// Inicializa el singleton de GC
-template <typename T>
-MPointerGC* MPointer<T>::gc = MPointerGC::getInstance();
+// Inicializa el singleton del Garbage Collector
+//template <typename T>
+//MPointerGC* MPointer<T>::gc = MPointerGC::getInstance();
 
 #endif

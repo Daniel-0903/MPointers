@@ -1,16 +1,16 @@
-#ifndef DOUBLYLINKEDLIST_H
+##ifndef DOUBLYLINKEDLIST_H
 #define DOUBLYLINKEDLIST_H
 
 #include "Node.h"
+#include <iostream>
 
 template <typename T>
 class DoublyLinkedList {
 private:
-	MPointer<Node<T>> head;  // Puntero al primer nodo
-	MPointer<Node<T>> tail;  // Puntero al último nodo
+	MPointer<Node<T>> head;
+	MPointer<Node<T>> tail;
 	
 public:
-	// Constructor
 	DoublyLinkedList() {
 		head = nullptr;
 		tail = nullptr;
@@ -20,22 +20,26 @@ public:
 	void insert(T value) {
 		MPointer<Node<T>> newNode = MPointer<Node<T>>::New();
 		*newNode = Node<T>(value);
-		if (head == nullptr) {
+		if (head.isNull()) {
 			head = newNode;
 			tail = newNode;
 		} else {
-			(*tail)->next = newNode;
-			(*newNode)->prev = tail;
+			(*tail).next = newNode;
+			(*newNode).prev = tail;
 			tail = newNode;
 		}
+	}
+	
+	MPointer<Node<T>> getHead() {
+		return head;
 	}
 	
 	// Imprimir la lista de izquierda a derecha
 	void printForward() {
 		MPointer<Node<T>> current = head;
-		while (current != nullptr) {
-			std::cout << *(*current)->data << " ";
-			current = (*current)->next;
+		while (!current.isNull()) {
+			std::cout << *(*current).data << " ";
+			current = (*current).next;
 		}
 		std::cout << std::endl;
 	}
@@ -43,16 +47,11 @@ public:
 	// Imprimir la lista de derecha a izquierda
 	void printBackward() {
 		MPointer<Node<T>> current = tail;
-		while (current != nullptr) {
-			std::cout << *(*current)->data << " ";
-			current = (*current)->prev;
+		while (!current.isNull()) {
+			std::cout << *(*current).data << " ";
+			current = (*current).prev;
 		}
 		std::cout << std::endl;
-	}
-	
-	// Obtener el nodo inicial (para algoritmos de ordenación)
-	MPointer<Node<T>> getHead() {
-		return head;
 	}
 };
 

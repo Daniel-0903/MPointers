@@ -6,11 +6,17 @@
 template <typename T>
 class Node {
 public:
-	MPointer<T> data;  // Dato almacenado en el nodo
-	MPointer<Node<T>> next;  // Puntero al siguiente nodo
-	MPointer<Node<T>> prev;  // Puntero al nodo anterior
+	MPointer<T> data;
+	MPointer<Node<T>> next;
+	MPointer<Node<T>> prev;
 	
-	// Constructor
+	// Constructor por defecto
+	Node() {
+		next = nullptr;
+		prev = nullptr;
+	}
+	
+	// Constructor que toma un valor
 	Node(T value) {
 		data = MPointer<T>::New();
 		*data = value;

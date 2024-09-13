@@ -2,21 +2,19 @@
 #define MPOINTERGC_H
 
 #include <map>
-#include <iostream>
 
 template <typename T>
-class MPointer;  // Forward declaration
+class MPointer;
 
 class MPointerGC {
 private:
-	std::map<void*, int> pointerMap;  // Mapa de punteros a su conteo de referencias
-	static MPointerGC* instance;  // Instancia del singleton
+	// Cambiamos el tipo de clave a MPointer<T>* para que acepte correctamente punteros de tipo MPointer<T>
+	std::map<void*, int> pointerMap;  // Mapa que almacena punteros y sus referencias
+	static MPointerGC* instance;      // Instancia del singleton
 	
-	// Constructor privado para singleton
-	MPointerGC() {}
+	MPointerGC() {}  // Constructor privado
 	
 public:
-		// Método estático para obtener la instancia del singleton
 		static MPointerGC* getInstance() {
 			if (!instance) {
 				instance = new MPointerGC();
@@ -24,44 +22,50 @@ public:
 			return instance;
 		}
 		
-		// Método para registrar un nuevo puntero
+		// Método para registrar un nuevo puntero de tipo T*
 		template <typename T>
-			void registerPointer(MPointer<T>* ptr) {
+			int registerPointer(T* ptr) {
 			pointerMap[ptr] = 1;  // Inicia el contador de referencias en 1
+			return pointerMap.size();  // Devuelve el ID basado en el tamaño del mapa
 		}
 			
 			// Método para incrementar el contador de referencias
-			void addReference(void* ptr) {
-				if (pointerMap.find(ptr) != pointerMap.end()) {
+			template <typename T>
+				void addReference(T* ptr) {
+				auto it = pointerMap.find(static_cast<void*>(ptr));
+				if (it != pointerMap.end()) {
 					pointerMap[ptr]++;
 				}
 			}
-			
-			// Método para decrementar el contador de referencias
-			void removeReference(void* ptr) {
-				if (pointerMap.find(ptr) != pointerMap.end()) {
-					pointerMap[ptr]--;
-					if (pointerMap[ptr] == 0) {
-						delete static_cast<MPointer<void>*>(ptr);  // Libera la memoria si ya no tiene referencias
-						pointerMap.erase(ptr);  // Elimina el puntero del mapa
+				
+				// Método para decrementar el contador de referencias y liberar si llega a cero
+				template <typename T>
+					void removeReference(T* ptr) {
+					auto it = pointerMap.find(static_cast<void*>(ptr));
+					if (it != pointerMap.end()) {
+						pointerMap[ptr]--;
+						if (pointerMap[ptr] == 0) {
+							delete ptr;
+							pointerMap.erase(ptr);  // Elimina el puntero del mapa
+						}
 					}
 				}
-			}
-			
-			// Método manual para liberar memoria no referenciada
-			void collect() {
-				for (auto it = pointerMap.begin(); it != pointerMap.end();) {
-					if (it->second == 0) {  // Si el contador de referencias es 0
-						delete static_cast<MPointer<void>*>(it->first);  // Libera la memoria
-						it = pointerMap.erase(it);  // Elimina el puntero del mapa
-					} else {
-						++it;
+					
+					// Recolector de basura manual
+					void collect() {
+						for (auto it = pointerMap.begin(); it != pointerMap.end();) {
+							if (it->second == 0) {
+								delete static_cast<typename std::remove_pointer<decltype(it->first)>::type*>(it->first);
+								it = pointerMap.erase(it);
+							} else {
+								++it;
+							}
+						}
 					}
-				}
-			}
 };
 
-// Inicializa el singleton
-MPointerGC* MPointerGC::instance = nullptr;
+// Definición de la instancia estática del singleton
+
 
 #endif
+
